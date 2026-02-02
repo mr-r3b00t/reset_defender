@@ -27,11 +27,31 @@ if ($prefs.ExclusionIpAddress) {
     Remove-MpPreference -ExclusionIpAddress $prefs.ExclusionIpAddress
 }
 
+# Reset Controlled Folder Access (Protected Folders)
+Write-Host "Resetting Controlled Folder Access..." -ForegroundColor Yellow
+Set-MpPreference -EnableControlledFolderAccess Disabled
+
+if ($prefs.ControlledFolderAccessProtectedFolders) {
+    Remove-MpPreference -ControlledFolderAccessProtectedFolders $prefs.ControlledFolderAccessProtectedFolders
+}
+if ($prefs.ControlledFolderAccessAllowedApplications) {
+    Remove-MpPreference -ControlledFolderAccessAllowedApplications $prefs.ControlledFolderAccessAllowedApplications
+}
+
+# Reset Attack Surface Reduction (ASR) rules
+Write-Host "Resetting Attack Surface Reduction rules..." -ForegroundColor Yellow
+if ($prefs.AttackSurfaceReductionRules_Ids) {
+    Remove-MpPreference -AttackSurfaceReductionRules_Ids $prefs.AttackSurfaceReductionRules_Ids
+}
+if ($prefs.AttackSurfaceReductionOnlyExclusions) {
+    Remove-MpPreference -AttackSurfaceReductionOnlyExclusions $prefs.AttackSurfaceReductionOnlyExclusions
+}
+
 # Reset scan settings to defaults
 Write-Host "Resetting scan settings..." -ForegroundColor Yellow
 Set-MpPreference -ScanParameters 1                          # Quick scan (default)
 Set-MpPreference -ScanScheduleDay 0                         # Every day
-Set-MpPreference -ScanScheduleTime (New-TimeSpan -Hours 2)  # 2:00 AM
+Set-MpPreference -ScanScheduleTime (Get-Date -Hour 2 -Minute 0)  # 2:00 AM
 Set-MpPreference -ScanAvgCPULoadFactor 50                   # 50% CPU (default)
 Set-MpPreference -DisableArchiveScanning $false
 Set-MpPreference -DisableRemovableDriveScanning $true       # Default is disabled
@@ -50,12 +70,12 @@ Set-MpPreference -MAPSReporting 2                           # Advanced (default)
 Set-MpPreference -SubmitSamplesConsent 1                    # Safe samples (default)
 Set-MpPreference -DisableBlockAtFirstSeen $false
 
-# Reset threat actions to defaults (Quarantine for high/severe, varies for others)
+# Reset threat actions to defaults (Quarantine is the default for all threat levels)
 Write-Host "Resetting threat actions..." -ForegroundColor Yellow
-Set-MpPreference -LowThreatDefaultAction 0                  # 0 = Default
-Set-MpPreference -ModerateThreatDefaultAction 0
-Set-MpPreference -HighThreatDefaultAction 0
-Set-MpPreference -SevereThreatDefaultAction 0
+Set-MpPreference -LowThreatDefaultAction Quarantine
+Set-MpPreference -ModerateThreatDefaultAction Quarantine
+Set-MpPreference -HighThreatDefaultAction Quarantine
+Set-MpPreference -SevereThreatDefaultAction Quarantine
 
 # Reset network protection
 Write-Host "Resetting network protection..." -ForegroundColor Yellow
@@ -64,6 +84,10 @@ Set-MpPreference -EnableNetworkProtection 0                 # 0 = Disabled (defa
 # Reset PUA protection
 Write-Host "Resetting PUA protection..." -ForegroundColor Yellow
 Set-MpPreference -PUAProtection 0                           # 0 = Disabled (default)
+
+# Reset Exploit Protection to system defaults
+Write-Host "Resetting Exploit Protection..." -ForegroundColor Yellow
+Set-ProcessMitigation -System -Reset
 
 # Update signatures
 Write-Host "Updating virus definitions..." -ForegroundColor Yellow
